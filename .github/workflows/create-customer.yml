@@ -1,0 +1,55 @@
+name: Generate Cloud Bucket and Raise PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Cloud Platform (AWS/GCP)'
+        required: true
+        default: 'AWS'
+        options:
+          - AWS
+          - GCP
+      customerName:
+        description: 'Customer Name'
+        required: true
+
+jobs:
+  generate_and_raise_pr:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Generate bucket terraform file
+      run: |
+        PLATFORM=${{ github.event.inputs.platform }}
+        CUSTOMER_NAME=${{ github.event.inputs.customerName }}
+        BRANCH_NAME="customer-${PLATFORM}-${CUSTOMER_NAME}"
+        FILENAME="${BRANCH_NAME}.tf"
+        
+        git checkout -b $BRANCH_NAME
+        
+        if [[ "$PLATFORM" == "AWS" ]]; then
+          echo "resource \"aws_s3_bucket\" \"bucket\" {" > "customers/$FILENAME"
+          echo "  bucket = \"customer-${CUSTOMER_NAME}\"" >> "customers/$FILENAME"
+          echo "}" >> "customers/$FILENAME"
+        elif [[ "$PLATFORM" == "GCP" ]]; then
+          echo "resource \"google_storage_bucket\" \"bucket\" {" > "customers/$FILENAME"
+          echo "  name = \"customer-${CUSTOMER_NAME}\"" >> "customers/$FILENAME"
+          echo "}" >> "customers/$FILENAME"
+        fi
+
+        git add -A
+        git commit -m "Add terraform file for $CUSTOMER_NAME"
+        git push origin $BRANCH_NAME
+
+    - name: Create Pull Request
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        BRANCH_NAME="customer-${{ github.event.inputs.platform }}-${{ github.event.inputs.customerName }}"
+        PR_TITLE="Add terraform file for ${{ github.event.inputs.customerName }}"
+        
+        # Create a pull request using the GitHub API
+        gh pr create --base main --head $BRANCH_NAME --title "$PR_TITLE" --body "This PR adds the terraform configuration for ${{ github.event.inputs.customerName }}"
