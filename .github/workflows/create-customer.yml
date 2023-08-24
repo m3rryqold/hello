@@ -21,6 +21,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
+    - name: Set Git identity
+      run: |
+        git config user.name "GitHub Action"
+        git config user.email "action@github.com"
+
     - name: Generate bucket terraform file
       run: |
         PLATFORM=${{ github.event.inputs.platform }}
