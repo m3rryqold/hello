@@ -49,27 +49,11 @@ jobs:
           echo "Invalid cloud provider selected"
           exit 1
         fi
-      working-directory: ${{ github.workspace }}
-
-    - name: Set Git identity
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-
-    - name: Create Branch and Commit Changes
-      run: |
-        branch_name="customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}"
-        git checkout -b "$branch_name"
-        git add customers/
-        git commit -m "Generate Terraform file for $cloud_provider bucket: $file_name"
-        git push origin "$branch_name"
 
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v3
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
-        base: main
         branch: "customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}"
         title: "Generate Terraform file for ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}.tf"
         body: "Automatically generated Terraform file for ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}.tf"
-
