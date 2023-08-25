@@ -28,30 +28,22 @@ jobs:
         customer_name="${{ github.event.inputs.customer_name }}"
         
         if [ "$cloud_provider" == "AWS" ]; then
-          file_name="customer-$cloud_provider-$customer_name.tf"
-          content=$(cat <<- EOM
-            provider "aws" {
-              region = "us-east-1"
-            }
-
-            resource "aws_s3_bucket" "customer_bucket" {
-              bucket = "customer-${customer_name}"
-              acl    = "private"
-            }
-          EOM
-          )
-          echo "$content" > customers/$file_name
+          file_name="customers/customer-$cloud_provider-$customer_name.tf"
+          echo 'provider "aws" {' > $file_name
+          echo '  region = "us-east-1"' >> $file_name
+          echo '}' >> $file_name
+          echo '' >> $file_name
+          echo 'resource "aws_s3_bucket" "customer_bucket" {' >> $file_name
+          echo "  bucket = \"customer-$customer_name\"" >> $file_name
+          echo '  acl    = "private"' >> $file_name
+          echo '}' >> $file_name
 
         elif [ "$cloud_provider" == "GCP" ]; then
-          file_name="customer-$cloud_provider-$customer_name.tf"
-          content=$(cat <<- EOM
-            resource "google_storage_bucket" "customer_bucket" {
-              name     = "customer-${customer_name}"
-              location = "us-central1"
-            }
-          EOM
-          )
-          echo "$content" > customers/$file_name
+          file_name="customers/customer-$cloud_provider-$customer_name.tf"
+          echo 'resource "google_storage_bucket" "customer_bucket" {' > $file_name
+          echo "  name     = \"customer-$customer_name\"" >> $file_name
+          echo '  location = "us-central1"' >> $file_name
+          echo '}' >> $file_name
 
         else
           echo "Invalid cloud provider selected"
