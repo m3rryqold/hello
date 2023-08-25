@@ -69,6 +69,7 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         base: main
-        branch: "$branch_name"
-        title: "Generate Terraform file for $cloud_provider bucket: $file_name"
-        body: "Automatically generated Terraform file for $cloud_provider bucket: $file_name"
+        branch: "customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}"
+        title: "Generate Terraform file for ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}.tf"
+        body: "Automatically generated Terraform file for ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}.tf"
+
