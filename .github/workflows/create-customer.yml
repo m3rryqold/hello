@@ -4,8 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       cloud_provider:
-        description: 'Cloud Provider'
+        description: 'Cloud Provider (AWS/GCP)'
         required: true
+        default: 'GCP'
         options:
           - AWS
           - GCP
@@ -32,7 +33,7 @@ jobs:
             provider "aws" {
               region = "us-east-1"
             }
-  
+
             resource "aws_s3_bucket" "customer_bucket" {
               bucket = "customer-${customer_name}"
               acl    = "private"
@@ -40,7 +41,7 @@ jobs:
           EOM
           )
           echo "$content" > customers/$file_name
-  
+
         elif [ "$cloud_provider" == "GCP" ]; then
           file_name="customer-$cloud_provider-$customer_name.tf"
           content=$(cat <<- EOM
@@ -51,7 +52,7 @@ jobs:
           EOM
           )
           echo "$content" > customers/$file_name
-  
+
         else
           echo "Invalid cloud provider selected"
           exit 1
