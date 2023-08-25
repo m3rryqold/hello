@@ -1,60 +1,81 @@
-name: Generate Cloud Bucket and Raise PR
+name: Generate Bucket Terraform File
 
 on:
   workflow_dispatch:
     inputs:
-      platform:
-        description: 'Cloud Platform (AWS/GCP)'
+      cloud_provider:
+        description: 'Cloud Provider'
         required: true
-        default: 'AWS'
         options:
           - AWS
           - GCP
-      customerName:
+      customer_name:
         description: 'Customer Name'
         required: true
 
 jobs:
-  generate_and_raise_pr:
+  generate-terraform:
     runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout code
+    - name: Check out code
       uses: actions/checkout@v2
+
+    - name: Generate Terraform File
+      run: |
+        cloud_provider="${{ github.event.inputs.cloud_provider }}"
+        customer_name="${{ github.event.inputs.customer_name }}"
+        
+        if [ "$cloud_provider" == "AWS" ]; then
+          file_name="customer-$cloud_provider-$customer_name.tf"
+          content=$(cat <<- EOM
+            provider "aws" {
+              region = "us-east-1"
+            }
+  
+            resource "aws_s3_bucket" "customer_bucket" {
+              bucket = "customer-${customer_name}"
+              acl    = "private"
+            }
+          EOM
+          )
+          echo "$content" > customers/$file_name
+  
+        elif [ "$cloud_provider" == "GCP" ]; then
+          file_name="customer-$cloud_provider-$customer_name.tf"
+          content=$(cat <<- EOM
+            resource "google_storage_bucket" "customer_bucket" {
+              name     = "customer-${customer_name}"
+              location = "us-central1"
+            }
+          EOM
+          )
+          echo "$content" > customers/$file_name
+  
+        else
+          echo "Invalid cloud provider selected"
+          exit 1
+        fi
+      working-directory: ${{ github.workspace }}
 
     - name: Set Git identity
       run: |
-        git config user.name "GitHub Action"
-        git config user.email "action@github.com"
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
 
-    - name: Generate bucket terraform file
+    - name: Create Branch and Commit Changes
       run: |
-        PLATFORM=${{ github.event.inputs.platform }}
-        CUSTOMER_NAME=${{ github.event.inputs.customerName }}
-        BRANCH_NAME="customer-${PLATFORM}-${CUSTOMER_NAME}"
-        FILENAME="${BRANCH_NAME}.tf"
-        
-        git checkout -b $BRANCH_NAME
-        
-        if [[ "$PLATFORM" == "AWS" ]]; then
-          echo "resource \"aws_s3_bucket\" \"bucket\" {" > "customers/$FILENAME"
-          echo "  bucket = \"customer-${CUSTOMER_NAME}\"" >> "customers/$FILENAME"
-          echo "}" >> "customers/$FILENAME"
-        elif [[ "$PLATFORM" == "GCP" ]]; then
-          echo "resource \"google_storage_bucket\" \"bucket\" {" > "customers/$FILENAME"
-          echo "  name = \"customer-${CUSTOMER_NAME}\"" >> "customers/$FILENAME"
-          echo "}" >> "customers/$FILENAME"
-        fi
-
-        git add -A
-        git commit -m "Add terraform file for $CUSTOMER_NAME"
-        git push origin $BRANCH_NAME
+        branch_name="customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}"
+        git checkout -b "$branch_name"
+        git add customers/
+        git commit -m "Generate Terraform file for $cloud_provider bucket: $file_name"
+        git push origin "$branch_name"
 
     - name: Create Pull Request
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        BRANCH_NAME="customer-${{ github.event.inputs.platform }}-${{ github.event.inputs.customerName }}"
-        PR_TITLE="Add terraform file for ${{ github.event.inputs.customerName }}"
-        
-        # Create a pull request using the GitHub API
-        gh pr create --base main --head $BRANCH_NAME --title "$PR_TITLE" --body "This PR adds the terraform configuration for ${{ github.event.inputs.customerName }}"
+      uses: peter-evans/create-pull-request@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        base: main
+        branch: "$branch_name"
+        title: "Generate Terraform file for $cloud_provider bucket: $file_name"
+        body: "Automatically generated Terraform file for $cloud_provider bucket: $file_name"
