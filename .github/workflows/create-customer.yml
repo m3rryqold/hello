@@ -84,15 +84,9 @@ jobs:
         tar xvf gh.tar.gz
         sudo install gh_2.0.0_linux_amd64/bin/gh /usr/local/bin/
 
-
-    - name: Authenticate with GitHub CLI
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: echo "$GH_TOKEN" | gh auth login --with-token
-
     - name: Create Pull Request using GitHub CLI
       run: |
         branch_name="customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}"
         title="Append ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.customer_name }}"
         body="Automatically appended Terraform config for ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.customer_name }}"
-        gh pr create --base main --head "$branch_name" --title "$title" --body "$body"
+        gh pr create --base main --head "$branch_name" --title "$title" --body "$body" --repo ${{ github.repository }} --token $GH_TOKEN
