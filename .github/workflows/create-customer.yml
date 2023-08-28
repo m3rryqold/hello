@@ -83,6 +83,5 @@ jobs:
         # token: ${{ secrets.GITHUB_TOKEN }}
         base: main
         branch: "customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}"
-        delete-branch: true
         title: "Append ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.customer_name }}"
         body: "Automatically appended Terraform config for ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.customer_name }}"
