@@ -81,7 +81,7 @@ jobs:
       uses: peter-evans/create-pull-request@v5
       with:
         # token: ${{ secrets.GITHUB_TOKEN }}
-        # base: main
+        base: main
         branch: "customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}"
         delete-branch: true
         title: "Append ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.customer_name }}"
