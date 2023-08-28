@@ -89,4 +89,4 @@ jobs:
         branch_name="customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}"
         title="Append ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.customer_name }}"
         body="Automatically appended Terraform config for ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.customer_name }}"
-        gh pr create --base main --head "$branch_name" --title "$title" --body "$body" --repo ${{ github.repository }}
+        GH_TOKEN=${{ secrets.GITHUB_TOKEN }} gh pr create --base main --head "$branch_name" --title "$title" --body "$body" --repo ${{ github.repository }}
