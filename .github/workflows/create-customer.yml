@@ -77,11 +77,12 @@ jobs:
         git commit -m "Append Terraform config for $cloud_provider bucket: customer-$customer_name"
         git push origin "$branch_name"
 
-    # - name: Create Pull Request
-    #   uses: peter-evans/create-pull-request@v3
-    #   with:
-    #     token: ${{ secrets.GITHUB_TOKEN }}
-    #     base: main
-    #     branch: "customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}"
-    #     title: "Append ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.customer_name }}"
-    #     body: "Automatically appended Terraform config for ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.customer_name }}"
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v3
+      with:
+        # token: ${{ secrets.GITHUB_TOKEN }}
+        # base: main
+        branch: "customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}"
+        delete-branch: true
+        title: "Append ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.customer_name }}"
+        body: "Automatically appended Terraform config for ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.customer_name }}"
