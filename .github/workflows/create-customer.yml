@@ -71,6 +71,7 @@ jobs:
     - name: Create Branch and Commit Changes
       run: |
         branch_name="customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}"
+        customer_name="${{ github.event.inputs.customer_name }}"
         git checkout -b "$branch_name"
         git add customers/
         git commit -m "Append Terraform config for $cloud_provider bucket: customer-$customer_name"
