@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       cloud_provider:
+        type: choice
         description: 'Cloud Provider (AWS/GCP)'
         required: true
         default: 'GCP'
@@ -22,25 +23,32 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v2
 
-    - name: Generate Terraform File
+    - name: Append Bucket Configuration
       run: |
         cloud_provider="${{ github.event.inputs.cloud_provider }}"
         customer_name="${{ github.event.inputs.customer_name }}"
         
         if [ "$cloud_provider" == "AWS" ]; then
-          file_name="customers/customer-$cloud_provider-$customer_name.tf"
-          echo 'provider "aws" {' > $file_name
-          echo '  region = "us-east-1"' >> $file_name
-          echo '}' >> $file_name
+          # Check if provider file exists and if not, create it
+          provider_file="customers/AWS/provider.tf"
+          if [ ! -f $provider_file ]; then
+            echo 'provider "aws" {' > $provider_file
+            echo '  region = "us-east-1"' >> $provider_file
+            echo '}' >> $provider_file
+          fi
+
+          # Append new bucket to customers.tf
+          file_name="customers/AWS/customers.tf"
           echo '' >> $file_name
-          echo 'resource "aws_s3_bucket" "customer_bucket" {' >> $file_name
+          echo 'resource "aws_s3_bucket" "'$customer_name'_bucket" {' >> $file_name
           echo "  bucket = \"customer-$customer_name\"" >> $file_name
           echo '  acl    = "private"' >> $file_name
           echo '}' >> $file_name
 
         elif [ "$cloud_provider" == "GCP" ]; then
-          file_name="customers/customer-$cloud_provider-$customer_name.tf"
-          echo 'resource "google_storage_bucket" "customer_bucket" {' > $file_name
+          file_name="customers/GCP/customers.tf"
+          echo '' >> $file_name
+          echo 'resource "google_storage_bucket" "'$customer_name'_bucket" {' >> $file_name
           echo "  name     = \"customer-$customer_name\"" >> $file_name
           echo '  location = "us-central1"' >> $file_name
           echo '}' >> $file_name
@@ -50,10 +58,24 @@ jobs:
           exit 1
         fi
 
+    - name: Set Git identity
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+
+    - name: Create Branch and Commit Changes
+      run: |
+        branch_name="customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}"
+        git checkout -b "$branch_name"
+        git add customers/
+        git commit -m "Append Terraform config for $cloud_provider bucket: customer-$customer_name"
+        git push origin "$branch_name"
+
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v3
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+        base: main
         branch: "customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}"
-        title: "Generate Terraform file for ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}.tf"
-        body: "Automatically generated Terraform file for ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}.tf"
+        title: "Append ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.customer_name }}"
+        body: "Automatically appended Terraform config for ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.customer_name }}"
