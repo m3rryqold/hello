@@ -48,6 +48,8 @@ jobs:
 
         elif [ "$cloud_provider" == "GCP" ]; then
           file_name="customers/GCP/customers.tf"
+          echo $file_name
+          echo "file_name"
           echo '' >> $file_name
           echo 'resource "google_storage_bucket" "'$customer_name'_bucket" {' >> $file_name
           echo "  name     = \"customer-$customer_name\"" >> $file_name
