@@ -76,7 +76,6 @@ jobs:
         git add customers/
         git commit -m "Append Terraform config for $cloud_provider bucket: customer-$customer_name"
         git push origin "$branch_name"
-        git checkout main
 
     - name: Install GitHub CLI
       run: |
