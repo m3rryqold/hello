@@ -47,14 +47,16 @@ jobs:
           echo '}' >> $file_name
 
         elif [ "$cloud_provider" == "GCP" ]; then
+          echo "DEBUG: Entering GCP branch..."
           file_name="customers/GCP/customers.tf"
-          echo $file_name
-          echo "file_name"
           echo '' >> $file_name
           echo 'resource "google_storage_bucket" "'$customer_name'_bucket" {' >> $file_name
           echo "  name     = \"customer-$customer_name\"" >> $file_name
           echo '  location = "us-central1"' >> $file_name
           echo '}' >> $file_name
+          echo "DEBUG: Wrote to $file_name. Contents below:"
+          cat $file_name
+
 
         else
           echo "Invalid cloud provider selected"
