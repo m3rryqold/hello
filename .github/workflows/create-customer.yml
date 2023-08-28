@@ -78,11 +78,21 @@ jobs:
         git push origin "$branch_name"
         git checkout main
 
-    - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v5
-      with:
-        # token: ${{ secrets.GITHUB_TOKEN }}
-        # base: main
-        branch: "customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}"
-        title: "Append ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.customer_name }}"
-        body: "Automatically appended Terraform config for ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.customer_name }}"
+    - name: Install GitHub CLI
+      run: |
+        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
+        sudo apt-add-repository https://cli.github.com/packages
+        sudo apt update
+        sudo apt install gh
+
+    - name: Authenticate with GitHub CLI
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: echo "$GH_TOKEN" | gh auth login --with-token
+
+    - name: Create Pull Request using GitHub CLI
+      run: |
+        branch_name="customer-${{ github.event.inputs.cloud_provider }}-${{ github.event.inputs.customer_name }}"
+        title="Append ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.customer_name }}"
+        body="Automatically appended Terraform config for ${{ github.event.inputs.cloud_provider }} bucket: customer-${{ github.event.inputs.customer_name }}"
+        gh pr create --base main --head "$branch_name" --title "$title" --body "$body"
